@@ -1,7 +1,4 @@
-var App = Em.Application.create();
-
-App.MyView = Em.View.extend({
-  mouseDown: function() {
-    window.alert("hello world!");
-  }
-});
+(function(app) {
+	'use strict';
+	console.log("TODO: Add js logic")
+})(window);
