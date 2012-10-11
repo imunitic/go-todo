@@ -1,4 +1,4 @@
 go-todo
 =======
 
-A todo list web app to learn Go and Ember.js
+A todo list web app to learn Go, Ember.js and MongoDB
