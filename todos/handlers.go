@@ -18,7 +18,6 @@ func Get(rw http.ResponseWriter, req *http.Request) {
 func Delete(rw http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	fmt.Fprintf(rw, "Deleteing todo with id %s", vars["id"])
-
 }
 
 func Create(rw http.ResponseWriter, req *http.Request) {
