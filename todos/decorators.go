@@ -6,7 +6,9 @@ import (
 	"net/http"
 )
 
-func DecorateWithMongoSession(url string, f func(rw http.ResponseWriter, req *http.Request)) func(rw http.ResponseWriter, req *http.Request) {
+type httpHandler func(rw http.ResponseWriter, req *http.Request)
+
+func DecorateWithMongoSession(url string, f httpHandler) httpHandler {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		session, err := mgo.Dial(url)
 		if err != nil {
