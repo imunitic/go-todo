@@ -5,6 +5,7 @@
 	},
 	"Server": {
 		"Port": "8080",
-		"Domain": "localhost"
+		"Domain": "localhost",
+		"WebRoot": "./html"
 	}
 }

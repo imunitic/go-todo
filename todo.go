@@ -23,6 +23,6 @@ func main() {
 	r.HandleFunc("/todo/{id}", todos.Delete).Methods("DELETE")
 
 	http.Handle("/api/", r)
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./html"))))
+	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(cfg.Server.WebRoot))))
 	http.ListenAndServe(fmt.Sprintf("%s:%s", cfg.Server.Domain, cfg.Server.Port), nil)
 }

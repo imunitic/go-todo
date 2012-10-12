@@ -17,8 +17,9 @@ type Mongo struct {
 }
 
 type Server struct {
-	Port   string
-	Domain string
+	Port    string
+	Domain  string
+	WebRoot string
 }
 
 type ConfigLoadError struct {
