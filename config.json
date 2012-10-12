@@ -1,0 +1,10 @@
+{
+	"Mongo": {
+		"Url": "localhost",
+		"Mode": "1"
+	},
+	"Server": {
+		"Port": "8080",
+		"Domain": "localhost"
+	}
+}
