@@ -16,11 +16,11 @@ func main() {
 		panic(err)
 	}
 
-	r.HandleFunc("/todos", todos.List).Methods("GET")
-	r.HandleFunc("/todo", todos.Create).Methods("PUT")
-	r.HandleFunc("/todo/{id}", todos.Get).Methods("GET")
-	r.HandleFunc("/todo/{id}", todos.Update).Methods("POST")
-	r.HandleFunc("/todo/{id}", todos.Delete).Methods("DELETE")
+	r.HandleFunc("/todos", todos.DataStore(cfg.Mongo, todos.List)).Methods("GET")
+	r.HandleFunc("/todo", todos.DataStore(cfg.Mongo, todos.Create)).Methods("PUT")
+	r.HandleFunc("/todo/{id}", todos.DataStore(cfg.Mongo, todos.Get)).Methods("GET")
+	r.HandleFunc("/todo/{id}", todos.DataStore(cfg.Mongo, todos.Update)).Methods("POST")
+	r.HandleFunc("/todo/{id}", todos.DataStore(cfg.Mongo, todos.Delete)).Methods("DELETE")
 
 	http.Handle("/api/", r)
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(cfg.Server.WebRoot))))

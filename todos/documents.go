@@ -15,26 +15,8 @@ type Todo struct {
 	CreatedAt time.Time
 }
 
-func (self Todo) String() string {
-	b, err := bson.Marshal(self)
-	if err != nil {
-		return ""
-	}
-
-	return string(b)
-}
-
 type User struct {
 	Id       bson.ObjectId "_id,omitempty"
 	Username string
 	Password string
-}
-
-func (self User) String() string {
-	b, err := bson.Marshal(self)
-	if err != nil {
-		return ""
-	}
-
-	return string(b)
 }
