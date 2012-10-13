@@ -66,7 +66,7 @@ func HandlePanic(cfg config.Config, f httpHandler) httpHandler {
 			if r := recover(); r != nil {
 				err := fmt.Sprintf("%s", r)
 				b, _ := json.Marshal(jsonError{err})
-				http.Error(rw, string(b), http.StatusInternalServerError)
+				JSONError(rw, string(b), http.StatusOK)
 			}
 		}()
 

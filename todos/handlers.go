@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -79,13 +78,6 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 func Login(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 
-	form := new(User)
-	decoder := schema.NewDecoder()
-	err := decoder.Decode(form, req.Form)
-	if err != nil {
-		panic("Authentication failed")
-	}
-
 	var session *mgo.Session
 	var ok bool
 	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
@@ -93,12 +85,15 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	user := User{}
-	err = session.DB("todos").C("user").
-		Find(bson.M{"Username": form.Username, "Password": form.Password}).
-		One(&user)
+	err := session.DB("todos").C("user").Find(bson.M{
+		"Username": req.FormValue("Username"),
+		"Password": req.FormValue("Password")}).One(&user)
+
 	if err != nil {
 		panic("Authentication failed")
 	}
+
+	fmt.Printf("%v", user)
 
 	s, err := store.Get(req, "session")
 	if err != nil {
