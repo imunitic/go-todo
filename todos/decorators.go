@@ -38,16 +38,23 @@ func Mongo(cfg config.Config, f httpHandler) httpHandler {
 	}
 }
 
-/*func Authenticate(f httpHandler) httpHandler {
+func Authenticate(cfg config.Config, f httpHandler) httpHandler {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		session, err := store.Get(req, "session")
 		if err != nil {
 			panic("Unable to create session")
 		}
 
-		f(rw, req)
+		if user, ok := session.Values["User"]; ok {
+			defer context.Clear(req)
+			context.Set(req, "User", user)
+			f(rw, req)
+			return
+		}
+
+		http.Redirect(rw, req, "/login.html", http.StatusTemporaryRedirect)
 	}
-}*/
+}
 
 type jsonError struct {
 	Error string `json:"error"`
