@@ -42,7 +42,7 @@ func Authenticate(cfg config.Config, f httpHandler) httpHandler {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		session, err := store.Get(req, "session")
 		if err != nil {
-			panic("Unable to create session")
+			panic(jsonError{"Unable to create session", SessionCreationError})
 		}
 
 		if user, ok := session.Values["User"]; ok {
@@ -52,21 +52,38 @@ func Authenticate(cfg config.Config, f httpHandler) httpHandler {
 			return
 		}
 
-		panic("Permission denied")
+		panic(jsonError{"Permission denied", AuthenticationError})
 	}
 }
 
+const (
+	Unknown int = iota
+	MongoSessionCreationError
+	SerializationError
+	QueryError
+	AuthenticationError
+	SessionCreationError
+)
+
 type jsonError struct {
-	Error string `json:"error"`
+	Error     string `json:"error"`
+	ErrorCode int    `json:"code"`
 }
 
 func HandlePanic(cfg config.Config, f httpHandler) httpHandler {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				err := fmt.Sprintf("%s", r)
-				b, _ := json.Marshal(jsonError{err})
-				JSONError(rw, string(b), http.StatusOK)
+				var s = ""
+				if err, ok := r.(jsonError); ok {
+					b, _ := json.Marshal(err)
+					s = string(b)
+				} else {
+					s = fmt.Sprintf("%s", r)
+					b, _ := json.Marshal(jsonError{s, Unknown})
+					s = string(b)
+				}
+				JSONError(rw, s, http.StatusOK)
 			}
 		}()
 

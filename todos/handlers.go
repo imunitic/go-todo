@@ -19,18 +19,18 @@ func List(rw http.ResponseWriter, req *http.Request) {
 	var session *mgo.Session
 	var ok bool
 	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
-		panic("Data store session not found")
+		panic(jsonError{"Data store session not found", MongoSessionCreationError})
 	}
 
 	var result []Todo
 	err := session.DB("todos").C("todo").Find(bson.M{"Status": StatusActive}).All(&result)
 	if err != nil {
-		panic("There are no todos found")
+		panic(jsonError{"There are no todos found", QueryError})
 	}
 
 	b, err := json.Marshal(result)
 	if err != nil {
-		panic("Could not serialize result")
+		panic(jsonError{"Could not serialize result", SerializationError})
 	}
 
 	fmt.Fprintf(rw, "%s", b)
@@ -43,18 +43,18 @@ func Get(rw http.ResponseWriter, req *http.Request) {
 	var session *mgo.Session
 	var ok bool
 	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
-		panic("Data store session not found")
+		panic(jsonError{"Data store session not found", MongoSessionCreationError})
 	}
 
 	result := Todo{}
 	err := session.DB("todos").C("todo").FindId(bson.ObjectIdHex(vars["id"])).One(&result)
 	if err != nil {
-		panic(fmt.Sprintf("Could not find todo with id %s", vars["id"]))
+		panic(jsonError{fmt.Sprintf("Could not find todo with id %s", vars["id"]), QueryError})
 	}
 
 	b, err := json.Marshal(result)
 	if err != nil {
-		panic("Could not serialize result")
+		panic(jsonError{"Could not serialize result", SerializationError})
 	}
 
 	fmt.Fprintf(rw, "%s", b)
@@ -81,7 +81,7 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 	var session *mgo.Session
 	var ok bool
 	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
-		panic("Data store session not found")
+		panic(jsonError{"Data store session not found", MongoSessionCreationError})
 	}
 
 	user := User{}
@@ -90,14 +90,14 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 		"Password": req.FormValue("Password")}).One(&user)
 
 	if err != nil {
-		panic("Authentication failed")
+		panic(jsonError{"Authentication failed", AuthenticationError})
 	}
 
 	fmt.Printf("%v", user)
 
 	s, err := store.Get(req, "session")
 	if err != nil {
-		panic("Unable to create session")
+		panic(jsonError{"Unable to create session", SessionCreationError})
 	}
 
 	s.Values["User"] = user
@@ -109,7 +109,7 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 func Logout(rw http.ResponseWriter, req *http.Request) {
 	session, err := store.Get(req, "session")
 	if err != nil {
-		panic("Unable to create session")
+		panic(jsonError{"Unable to create session", SessionCreationError})
 	}
 
 	if _, ok := session.Values["User"]; ok {
