@@ -18,11 +18,11 @@ func main() {
 
 	logout := todos.H(todos.Logout).D(todos.HandlePanic, cfg)
 	login := todos.H(todos.Login).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
-	list := todos.H(todos.List).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg).D(todos.Authenticate, cfg)
-	create := todos.H(todos.Create).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
-	get := todos.H(todos.Get).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
-	update := todos.H(todos.Update).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
-	delete := todos.H(todos.Delete).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
+	list := todos.H(todos.List).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
+	create := todos.H(todos.Create).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
+	get := todos.H(todos.Get).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
+	update := todos.H(todos.Update).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
+	delete := todos.H(todos.Delete).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
 
 	r.HandleFunc("/login", login).Methods("POST")
 	r.HandleFunc("/logout", logout).Methods("GET")

@@ -52,7 +52,7 @@ func Authenticate(cfg config.Config, f httpHandler) httpHandler {
 			return
 		}
 
-		http.Redirect(rw, req, "/login.html", http.StatusTemporaryRedirect)
+		panic("Permission denied")
 	}
 }
 
