@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 )
 
+var store = sessions.NewCookieStore([]byte("47cc67093475061e3d95369d"))
+
 func List(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
-	defer handlePanic(rw)
 
 	var session *mgo.Session
 	var ok bool
@@ -21,7 +23,7 @@ func List(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var result []Todo
-	err := session.DB("todos").C("todo").Find(bson.M{"Status": 0}).All(&result)
+	err := session.DB("todos").C("todo").Find(bson.M{"Status": StatusActive}).All(&result)
 	if err != nil {
 		panic("There are no todos found")
 	}
@@ -36,7 +38,6 @@ func List(rw http.ResponseWriter, req *http.Request) {
 
 func Get(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
-	defer handlePanic(rw)
 
 	vars := mux.Vars(req)
 	var session *mgo.Session
@@ -72,16 +73,4 @@ func Create(rw http.ResponseWriter, req *http.Request) {
 func Update(rw http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	fmt.Fprintf(rw, "Updating todo with id %s", vars["id"])
-}
-
-type jsonError struct {
-	Error string `json:"error"`
-}
-
-func handlePanic(rw http.ResponseWriter) {
-	if r := recover(); r != nil {
-		err := fmt.Sprintf("%s", r)
-		b, _ := json.Marshal(jsonError{err})
-		http.Error(rw, string(b), http.StatusInternalServerError)
-	}
 }

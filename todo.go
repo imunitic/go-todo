@@ -16,11 +16,17 @@ func main() {
 		panic(err)
 	}
 
-	r.HandleFunc("/todos", todos.DataStore(cfg.Mongo, todos.List)).Methods("GET")
-	r.HandleFunc("/todo", todos.DataStore(cfg.Mongo, todos.Create)).Methods("PUT")
-	r.HandleFunc("/todo/{id}", todos.DataStore(cfg.Mongo, todos.Get)).Methods("GET")
-	r.HandleFunc("/todo/{id}", todos.DataStore(cfg.Mongo, todos.Update)).Methods("POST")
-	r.HandleFunc("/todo/{id}", todos.DataStore(cfg.Mongo, todos.Delete)).Methods("DELETE")
+	list := todos.H(todos.List).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
+	create := todos.H(todos.Create).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
+	get := todos.H(todos.Get).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
+	update := todos.H(todos.Update).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
+	delete := todos.H(todos.Delete).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
+
+	r.HandleFunc("/todos", list).Methods("GET")
+	r.HandleFunc("/todo", create).Methods("PUT")
+	r.HandleFunc("/todo/{id}", get).Methods("GET")
+	r.HandleFunc("/todo/{id}", update).Methods("POST")
+	r.HandleFunc("/todo/{id}", delete).Methods("DELETE")
 
 	http.Handle("/api/", r)
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir(cfg.Server.WebRoot))))

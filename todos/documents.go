@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	StatusCompleted int = 0
+	StatusActive    int = 1
+)
+
 type Todo struct {
 	Id        bson.ObjectId "_id,omitempty"
 	Owner     bson.ObjectId
