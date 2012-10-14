@@ -6,6 +6,8 @@ import (
 	"github.com/gorilla/sessions"
 	"labix.org/v2/mgo/bson"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 var store = sessions.NewCookieStore([]byte("47cc67093475061e3d95369d"))
@@ -22,7 +24,8 @@ func List(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var result []Todo
-	err = session.DB("todos").C("todo").Find(bson.M{"Status": StatusActive, "Owner": user.Id.Hex()}).All(&result)
+	err = session.DB("todos").C("todo").
+		Find(bson.M{"Status": StatusActive, "Owner": user.Id.Hex()}).All(&result)
 	if err != nil {
 		panic(jsonError{"There are no todos found", QueryError})
 	}
@@ -43,7 +46,8 @@ func Get(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	result := Todo{}
-	err = session.DB("todos").C("todo").Find(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()}).One(&result)
+	err = session.DB("todos").C("todo").
+		Find(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()}).One(&result)
 	if err != nil {
 		panic(jsonError{fmt.Sprintf("Could not find todo with id %s", vars["id"]), QueryError})
 	}
@@ -53,12 +57,68 @@ func Get(rw http.ResponseWriter, req *http.Request) {
 
 func Delete(rw http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	fmt.Fprintf(rw, "Deleteing todo with id %s", vars["id"])
+	session, err := MongoSession(req)
+	if err != nil {
+		panic(err)
+	}
+
+	user, err := AuthenticatedUser(req)
+	if err != nil {
+		panic(err)
+	}
+
+	err = session.DB("todos").C("todo").
+		Remove(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()})
+	if err != nil {
+		panic(jsonError{fmt.Sprintf("Could not remove todo with id %s", vars["id"]), QueryError})
+	}
+
+	Json(rw, true)
 }
 
 func Create(rw http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(rw, "Creating a new todo")
+	session, err := MongoSession(req)
+	if err != nil {
+		panic(err)
+	}
 
+	user, err := AuthenticatedUser(req)
+	if err != nil {
+		panic(err)
+	}
+
+	timeFormat := "2006-01-02 15:04:05"
+
+	dueAt, err := time.Parse(timeFormat, req.FormValue("DueAt"))
+	if err != nil {
+		dueAt = time.Now().Add(time.Duration(24) * time.Hour)
+	}
+
+	createdAt, err := time.Parse(timeFormat, req.FormValue("CreatedAt"))
+	if err != nil {
+		createdAt = time.Now()
+	}
+
+	priority, err := strconv.Atoi(req.FormValue("Priority"))
+	if err != nil {
+		priority = 0
+	}
+
+	c := session.DB("todos").C("todo")
+
+	id := bson.NewObjectId()
+	err = c.Insert(&Todo{Id: id,
+		Owner:     user.Id,
+		Title:     req.FormValue("Title"),
+		Priority:  priority,
+		Status:    StatusActive,
+		DueAt:     dueAt,
+		CreatedAt: createdAt})
+	if err != nil {
+		panic(jsonError{"Unable to insert a todo", QueryError})
+	}
+
+	Json(rw, struct{ Id string }{Id: id.Hex()})
 }
 
 func Update(rw http.ResponseWriter, req *http.Request) {

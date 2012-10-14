@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	StatusCompleted int = 0
-	StatusActive    int = 1
+	StatusCompleted int = iota
+	StatusActive
 )
 
 type Todo struct {
