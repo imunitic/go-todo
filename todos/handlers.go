@@ -2,10 +2,8 @@ package todos
 
 import (
 	"fmt"
-	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"net/http"
 )
@@ -69,14 +67,13 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 }
 
 func Login(rw http.ResponseWriter, req *http.Request) {
-	var session *mgo.Session
-	var ok bool
-	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
-		panic(jsonError{"Data store session not found", MongoSessionCreationError})
+	session, err := MongoSession(req)
+	if err != nil {
+		panic(err)
 	}
 
 	user := User{}
-	err := session.DB("todos").C("user").Find(bson.M{
+	err = session.DB("todos").C("user").Find(bson.M{
 		"Username": req.FormValue("Username"),
 		"Password": req.FormValue("Password")}).One(&user)
 
