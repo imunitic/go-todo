@@ -135,8 +135,8 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 
 	changes := Todo{}
 	hasChanges := false
-	if req.FormValue("DueAt") != "" {
-		dueAt, err := time.Parse("2006-01-02 15:04:05", req.FormValue("DueAt"))
+	if v := req.FormValue("DueAt"); v != "" {
+		dueAt, err := time.Parse("2006-01-02 15:04:05", v)
 		if err != nil {
 			dueAt = result.DueAt
 		}
@@ -144,8 +144,8 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 		hasChanges = true
 	}
 
-	if req.FormValue("Priority") != "" {
-		priority, err := strconv.Atoi(req.FormValue("Priority"))
+	if v := req.FormValue("Priority"); v != "" {
+		priority, err := strconv.Atoi(v)
 		if err != nil {
 			priority = result.Priority
 		}
@@ -153,8 +153,8 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 		hasChanges = true
 	}
 
-	if req.FormValue("Status") != "" {
-		status, err := strconv.Atoi(req.FormValue("Status"))
+	if v := req.FormValue("Status"); v != "" {
+		status, err := strconv.Atoi(v)
 		if err != nil {
 			status = result.Status
 		}
