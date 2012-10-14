@@ -9,6 +9,24 @@ import (
 	"net/http"
 )
 
+const (
+	Unknown int = iota
+	MongoSessionCreationError
+	SerializationError
+	QueryError
+	AuthenticationError
+	SessionCreationError
+)
+
+type jsonError struct {
+	ErrorS    string `json:"error"`
+	ErrorCode int    `json:"code"`
+}
+
+func (j jsonError) Error() string {
+	return fmt.Sprintf("%s, %s", j.ErrorS, j.ErrorCode)
+}
+
 type decorator func(cfg config.Config, f httpHandler) httpHandler
 type httpHandler func(rw http.ResponseWriter, req *http.Request)
 
@@ -24,7 +42,7 @@ func Mongo(cfg config.Config, f httpHandler) httpHandler {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		session, err := mgo.Dial(cfg.Mongo.Url)
 		if err != nil {
-			panic("Could not initialize data store")
+			panic(jsonError{"Could not initialize data store", MongoSessionCreationError})
 		}
 
 		defer session.Close()
@@ -56,20 +74,6 @@ func Authenticate(cfg config.Config, f httpHandler) httpHandler {
 	}
 }
 
-const (
-	Unknown int = iota
-	MongoSessionCreationError
-	SerializationError
-	QueryError
-	AuthenticationError
-	SessionCreationError
-)
-
-type jsonError struct {
-	Error     string `json:"error"`
-	ErrorCode int    `json:"code"`
-}
-
 func HandlePanic(cfg config.Config, f httpHandler) httpHandler {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		defer func() {
@@ -83,7 +87,7 @@ func HandlePanic(cfg config.Config, f httpHandler) httpHandler {
 					b, _ := json.Marshal(jsonError{s, Unknown})
 					s = string(b)
 				}
-				JSONError(rw, s, http.StatusOK)
+				Error(rw, s, http.StatusOK)
 			}
 		}()
 

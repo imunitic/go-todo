@@ -1,7 +1,6 @@
 package todos
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
@@ -14,50 +13,44 @@ import (
 var store = sessions.NewCookieStore([]byte("47cc67093475061e3d95369d"))
 
 func List(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
+	session, err := MongoSession(req)
+	if err != nil {
+		panic(err)
+	}
 
-	var session *mgo.Session
-	var ok bool
-	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
-		panic(jsonError{"Data store session not found", MongoSessionCreationError})
+	user, err := AuthenticatedUser(req)
+	if err != nil {
+		panic(err)
 	}
 
 	var result []Todo
-	err := session.DB("todos").C("todo").Find(bson.M{"Status": StatusActive}).All(&result)
+	err = session.DB("todos").C("todo").Find(bson.M{"Status": StatusActive, "Owner": user.Id.Hex()}).All(&result)
 	if err != nil {
 		panic(jsonError{"There are no todos found", QueryError})
 	}
 
-	b, err := json.Marshal(result)
-	if err != nil {
-		panic(jsonError{"Could not serialize result", SerializationError})
-	}
-
-	fmt.Fprintf(rw, "%s", b)
+	Json(rw, result)
 }
 
 func Get(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
-
 	vars := mux.Vars(req)
-	var session *mgo.Session
-	var ok bool
-	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
-		panic(jsonError{"Data store session not found", MongoSessionCreationError})
+	session, err := MongoSession(req)
+	if err != nil {
+		panic(err)
+	}
+
+	user, err := AuthenticatedUser(req)
+	if err != nil {
+		panic(err)
 	}
 
 	result := Todo{}
-	err := session.DB("todos").C("todo").FindId(bson.ObjectIdHex(vars["id"])).One(&result)
+	err = session.DB("todos").C("todo").Find(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()}).One(&result)
 	if err != nil {
 		panic(jsonError{fmt.Sprintf("Could not find todo with id %s", vars["id"]), QueryError})
 	}
 
-	b, err := json.Marshal(result)
-	if err != nil {
-		panic(jsonError{"Could not serialize result", SerializationError})
-	}
-
-	fmt.Fprintf(rw, "%s", b)
+	Json(rw, result)
 }
 
 func Delete(rw http.ResponseWriter, req *http.Request) {
@@ -76,8 +69,6 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 }
 
 func Login(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
-
 	var session *mgo.Session
 	var ok bool
 	if session, ok = context.Get(req, "session").(*mgo.Session); !ok {
@@ -103,7 +94,7 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 	s.Values["User"] = user
 	s.Save(req, rw)
 
-	fmt.Fprintf(rw, "%s", true)
+	Json(rw, true)
 }
 
 func Logout(rw http.ResponseWriter, req *http.Request) {
