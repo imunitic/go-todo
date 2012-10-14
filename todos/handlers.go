@@ -87,16 +87,9 @@ func Create(rw http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	timeFormat := "2006-01-02 15:04:05"
-
-	dueAt, err := time.Parse(timeFormat, req.FormValue("DueAt"))
+	dueAt, err := time.Parse("2006-01-02 15:04:05", req.FormValue("DueAt"))
 	if err != nil {
 		dueAt = time.Now().Add(time.Duration(24) * time.Hour)
-	}
-
-	createdAt, err := time.Parse(timeFormat, req.FormValue("CreatedAt"))
-	if err != nil {
-		createdAt = time.Now()
 	}
 
 	priority, err := strconv.Atoi(req.FormValue("Priority"))
@@ -113,7 +106,7 @@ func Create(rw http.ResponseWriter, req *http.Request) {
 		Priority:  priority,
 		Status:    StatusActive,
 		DueAt:     dueAt,
-		CreatedAt: createdAt})
+		CreatedAt: time.Now()})
 	if err != nil {
 		panic(jsonError{"Unable to insert a todo", QueryError})
 	}
@@ -123,7 +116,60 @@ func Create(rw http.ResponseWriter, req *http.Request) {
 
 func Update(rw http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	fmt.Fprintf(rw, "Updating todo with id %s", vars["id"])
+	session, err := MongoSession(req)
+	if err != nil {
+		panic(err)
+	}
+
+	user, err := AuthenticatedUser(req)
+	if err != nil {
+		panic(err)
+	}
+
+	result := Todo{}
+	err = session.DB("todos").C("todo").
+		Find(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()}).One(&result)
+	if err != nil {
+		panic(jsonError{fmt.Sprintf("Could not find todo with id %s", vars["id"]), QueryError})
+	}
+
+	changes := Todo{}
+	hasChanges := false
+	if req.FormValue("DueAt") != "" {
+		dueAt, err := time.Parse("2006-01-02 15:04:05", req.FormValue("DueAt"))
+		if err != nil {
+			dueAt = result.DueAt
+		}
+		changes.DueAt = dueAt
+		hasChanges = true
+	}
+
+	if req.FormValue("Priority") != "" {
+		priority, err := strconv.Atoi(req.FormValue("Priority"))
+		if err != nil {
+			priority = result.Priority
+		}
+		changes.Priority = priority
+		hasChanges = true
+	}
+
+	if req.FormValue("Status") != "" {
+		status, err := strconv.Atoi(req.FormValue("Status"))
+		if err != nil {
+			status = result.Status
+		}
+		changes.Status = status
+		hasChanges = true
+	}
+
+	if hasChanges {
+		err := session.DB("todos").C("todo").Update(bson.M{"_id": result.Id, "Owner": user.Id}, changes)
+		if err != nil {
+			panic(jsonError{fmt.Sprintf("Could not update todo with id %s", result.Id), QueryError})
+		}
+	}
+
+	Json(rw, true)
 }
 
 func Login(rw http.ResponseWriter, req *http.Request) {
@@ -140,8 +186,6 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(jsonError{"Authentication failed", AuthenticationError})
 	}
-
-	fmt.Printf("%v", user)
 
 	s, err := store.Get(req, "session")
 	if err != nil {
