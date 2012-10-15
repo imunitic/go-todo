@@ -128,10 +128,16 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 
 	changes := bson.M{}
 	hasChanges := false
+
+	if v := req.FormValue("Title"); v != "" {
+		changes["ti"] = v
+		hasChanges = true
+	}
+
 	if v := req.FormValue("DueAt"); v != "" {
 		dueAt, err := time.Parse("2006-01-02 15:04:05", v)
 		if err == nil {
-			changes["DueAt"] = dueAt
+			changes["du"] = dueAt
 			hasChanges = true
 		}
 	}
@@ -139,7 +145,7 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 	if v := req.FormValue("Priority"); v != "" {
 		priority, err := strconv.Atoi(v)
 		if err == nil {
-			changes["Priority"] = priority
+			changes["pr"] = priority
 			hasChanges = true
 		}
 	}
@@ -147,7 +153,7 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 	if v := req.FormValue("Status"); v != "" {
 		status, err := strconv.Atoi(v)
 		if err == nil {
-			changes["Status"] = status
+			changes["st"] = status
 			hasChanges = true
 		}
 	}
@@ -171,8 +177,7 @@ func Login(rw http.ResponseWriter, req *http.Request) {
 
 	user := User{}
 	err = session.DB("todos").C("user").Find(bson.M{
-		"Username": req.FormValue("Username"),
-		"Password": req.FormValue("Password")}).One(&user)
+		"u": req.FormValue("Username"), "p": req.FormValue("Password")}).One(&user)
 
 	if err != nil {
 		panic(jsonError{"Authentication failed", AuthenticationError})
