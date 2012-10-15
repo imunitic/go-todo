@@ -130,7 +130,7 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 	hasChanges := false
 	if v := req.FormValue("DueAt"); v != "" {
 		dueAt, err := time.Parse("2006-01-02 15:04:05", v)
-		if err = nil {
+		if err == nil {
 			changes["DueAt"] = dueAt
 			hasChanges = true
 		}
@@ -138,7 +138,7 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 
 	if v := req.FormValue("Priority"); v != "" {
 		priority, err := strconv.Atoi(v)
-		if err = nil {
+		if err == nil {
 			changes["Priority"] = priority
 			hasChanges = true
 		}
@@ -156,7 +156,7 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 		err := session.DB("todos").C("todo").
 			Update(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id}, bson.M{"$set": changes})
 		if err != nil {
-			panic(jsonError{fmt.Sprintf("Could not update todo with id %s", result.Id), QueryError})
+			panic(jsonError{fmt.Sprintf("Could not update todo with id %s", vars["id"]), QueryError})
 		}
 	}
 
