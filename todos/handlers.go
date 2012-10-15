@@ -25,7 +25,7 @@ func List(rw http.ResponseWriter, req *http.Request) {
 
 	var result []Todo
 	err = session.DB("todos").C("todo").
-		Find(bson.M{"Status": StatusActive, "Owner": user.Id.Hex()}).All(&result)
+		Find(bson.M{"Status": StatusActive, "ow": user.Id.Hex()}).All(&result)
 	if err != nil {
 		panic(jsonError{"There are no todos found", QueryError})
 	}
@@ -47,7 +47,7 @@ func Get(rw http.ResponseWriter, req *http.Request) {
 
 	result := Todo{}
 	err = session.DB("todos").C("todo").
-		Find(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()}).One(&result)
+		Find(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "ow": user.Id.Hex()}).One(&result)
 	if err != nil {
 		panic(jsonError{fmt.Sprintf("Could not find todo with id %s", vars["id"]), QueryError})
 	}
@@ -68,7 +68,7 @@ func Delete(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	err = session.DB("todos").C("todo").
-		Remove(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id.Hex()})
+		Remove(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "ow": user.Id.Hex()})
 	if err != nil {
 		panic(jsonError{fmt.Sprintf("Could not remove todo with id %s", vars["id"]), QueryError})
 	}
@@ -160,7 +160,7 @@ func Update(rw http.ResponseWriter, req *http.Request) {
 
 	if hasChanges {
 		err := session.DB("todos").C("todo").
-			Update(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "Owner": user.Id}, bson.M{"$set": changes})
+			Update(bson.M{"_id": bson.ObjectIdHex(vars["id"]), "ow": user.Id}, bson.M{"$set": changes})
 		if err != nil {
 			panic(jsonError{fmt.Sprintf("Could not update todo with id %s", vars["id"]), QueryError})
 		}
