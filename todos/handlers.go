@@ -111,7 +111,7 @@ func Create(rw http.ResponseWriter, req *http.Request) {
 		panic(jsonError{"Unable to insert a todo", QueryError})
 	}
 
-	Json(rw, struct{ Id string }{Id: id.Hex()})
+	Json(rw, struct{ id string }{id: id.Hex()})
 }
 
 func Update(rw http.ResponseWriter, req *http.Request) {
