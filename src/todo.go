@@ -1,8 +1,6 @@
 package main
 
 import (
-	"./config"
-	"./todos"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -11,18 +9,18 @@ import (
 func main() {
 	r := mux.NewRouter().PathPrefix("/api").Subrouter()
 
-	cfg := config.Config{}
+	cfg := Config{}
 	if err := cfg.Load("./config.json"); err != nil {
 		panic(err)
 	}
 
-	logout := todos.H(todos.Logout).D(todos.HandlePanic, cfg)
-	login := todos.H(todos.Login).D(todos.Mongo, cfg).D(todos.HandlePanic, cfg)
-	list := todos.H(todos.List).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
-	create := todos.H(todos.Create).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
-	get := todos.H(todos.Get).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
-	update := todos.H(todos.Update).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
-	delete := todos.H(todos.Delete).D(todos.Mongo, cfg).D(todos.Authenticate, cfg).D(todos.HandlePanic, cfg)
+	logout := H(Logout).D(HandlePanic, cfg)
+	login := H(Login).D(Mongo, cfg).D(HandlePanic, cfg)
+	list := H(List).D(Mongo, cfg).D(Authenticate, cfg).D(HandlePanic, cfg)
+	create := H(Create).D(Mongo, cfg).D(Authenticate, cfg).D(HandlePanic, cfg)
+	get := H(Get).D(Mongo, cfg).D(Authenticate, cfg).D(HandlePanic, cfg)
+	update := H(Update).D(Mongo, cfg).D(Authenticate, cfg).D(HandlePanic, cfg)
+	delete := H(Delete).D(Mongo, cfg).D(Authenticate, cfg).D(HandlePanic, cfg)
 
 	r.HandleFunc("/login", login).Methods("POST")
 	r.HandleFunc("/logout", logout).Methods("GET")

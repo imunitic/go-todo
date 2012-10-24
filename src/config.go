@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"encoding/json"
@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	Mongo  Mongo
+	Mongo  MongoDb
 	Server Server
 }
 
-type Mongo struct {
+type MongoDb struct {
 	Url  string
 	Mode int
 }

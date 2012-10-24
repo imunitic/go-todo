@@ -1,4 +1,4 @@
-package todos
+package main
 
 import (
 	"labix.org/v2/mgo/bson"
